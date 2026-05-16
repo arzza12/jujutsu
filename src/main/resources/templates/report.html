@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Отчёт ' + ${mission.missionId} + ' — ТМК'">Отчёт — ТМК</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .navbar-custom {
+            background-color: #1a1a2e;
+            border-bottom: 2px solid #7b2fff;
+        }
+        .navbar-brand {
+            color: #c084fc !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+
+        /* Шапка отчёта */
+        .report-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #7b2fff33;
+            padding: 2rem 0;
+        }
+        .mission-id-label {
+            font-family: monospace;
+            color: #a78bfa;
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+        .mission-title {
+            color: #c084fc;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        /* Блоки секций */
+        .section-card {
+            background: #111122;
+            border: 1px solid #7b2fff33;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .section-title {
+            color: #c084fc;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #7b2fff22;
+        }
+        .section-title i { margin-right: 0.5rem; }
+
+        /* Поля данных */
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 0;
+            border-bottom: 1px solid #ffffff08;
+        }
+        .data-row:last-child { border-bottom: none; }
+        .data-label {
+            color: #666;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 160px;
+        }
+        .data-value { color: #e0e0e0; font-size: 0.92rem; text-align: right; }
+
+        /* Бейджи */
+        .badge-success  { background-color: #166534; color: #86efac; }
+        .badge-failure  { background-color: #7f1d1d; color: #fca5a5; }
+        .badge-partial  { background-color: #713f12; color: #fcd34d; }
+        .badge-threat-low     { background-color: #14532d; color: #86efac; }
+        .badge-threat-medium  { background-color: #713f12; color: #fcd34d; }
+        .badge-threat-high    { background-color: #7f1d1d; color: #fca5a5; }
+        .badge-threat-special { background-color: #4c1d95; color: #c4b5fd; }
+        .badge-rank { background: #1e1b4b; color: #a5b4fc; border: 1px solid #4338ca44; }
+        .badge-technique { background: #1a2e1a; color: #86efac; border: 1px solid #16653444; }
+
+        /* Карточки заклинателей и техник */
+        .item-card {
+            background: #1a1a2e;
+            border: 1px solid #7b2fff22;
+            border-radius: 8px;
+            padding: 0.9rem 1.1rem;
+            margin-bottom: 0.6rem;
+        }
+        .item-card:last-child { margin-bottom: 0; }
+        .item-name { color: #e0e0e0; font-weight: 600; }
+        .item-sub  { color: #888; font-size: 0.82rem; }
+
+        /* Хронология */
+        .timeline { position: relative; padding-left: 1.5rem; }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px; top: 0; bottom: 0;
+            width: 2px;
+            background: #7b2fff33;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.2rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 6px;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #7b2fff;
+            border: 2px solid #c084fc;
+        }
+        .timeline-time { color: #7b2fff; font-size: 0.78rem; font-family: monospace; }
+        .timeline-type { color: #a78bfa; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 1px; }
+        .timeline-desc { color: #ccc; font-size: 0.9rem; }
+
+        /* Теги */
+        .tag-badge {
+            display: inline-block;
+            background: #1e1b4b;
+            color: #a5b4fc;
+            border: 1px solid #4338ca44;
+            border-radius: 20px;
+            padding: 0.2rem 0.7rem;
+            font-size: 0.78rem;
+            margin: 0.2rem;
+        }
+
+        /* Риск-индикатор */
+        .risk-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: #1a1a2e;
+            margin-top: 4px;
+        }
+        .risk-fill-low      { width: 25%; background: #86efac; }
+        .risk-fill-medium   { width: 50%; background: #fcd34d; }
+        .risk-fill-high     { width: 75%; background: #f97316; }
+        .risk-fill-critical { width: 100%; background: #ef4444; }
+
+        .btn-back {
+            color: #888;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .btn-back:hover { color: #c084fc; }
+        .money-value { font-family: monospace; color: #fcd34d; }
+        .notes-text {
+            background: #0d0d1a;
+            border-left: 3px solid #7b2fff;
+            padding: 0.8rem 1rem;
+            border-radius: 0 8px 8px 0;
+            color: #ccc;
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Навигация -->
+<nav class="navbar navbar-custom">
+    <div class="container">
+        <a href="/" class="navbar-brand">
+            <i class="bi bi-archive-fill me-2"></i>АРХИВ МИССИЙ — ТМК
+        </a>
+        <a href="/" class="btn-back">
+            <i class="bi bi-arrow-left me-1"></i>К архиву
+        </a>
+    </div>
+</nav>
+
+<!-- Шапка отчёта -->
+<div class="report-header">
+    <div class="container">
+        <div class="mission-id-label">
+            <i class="bi bi-file-earmark-text me-1"></i>
+            ОПЕРАТИВНЫЙ ОТЧЁТ — <span th:text="${mission.missionId}"></span>
+        </div>
+        <div class="mission-title mt-1" th:text="${mission.location}">Локация</div>
+        <div class="text-secondary mt-1">
+            <i class="bi bi-calendar3 me-1"></i>
+            <span th:text="${#temporals.format(mission.date, 'dd MMMM yyyy')}"></span>
+        </div>
+
+        <!-- Исход миссии крупно -->
+        <div class="mt-3">
+            <span th:switch="${mission.outcome != null ? mission.outcome.name() : 'UNKNOWN'}">
+                <span th:case="'SUCCESS'" class="badge badge-success fs-6 px-3 py-2 rounded">
+                    <i class="bi bi-check-circle me-1"></i>УСПЕХ
+                </span>
+                <span th:case="'PARTIAL_SUCCESS'" class="badge badge-partial fs-6 px-3 py-2 rounded">
+                    <i class="bi bi-dash-circle me-1"></i>ЧАСТИЧНЫЙ УСПЕХ
+                </span>
+                <span th:case="'PARTIAL'" class="badge badge-partial fs-6 px-3 py-2 rounded">
+                    <i class="bi bi-dash-circle me-1"></i>ЧАСТИЧНЫЙ УСПЕХ
+                </span>
+                <span th:case="'FAILURE'" class="badge badge-failure fs-6 px-3 py-2 rounded">
+                    <i class="bi bi-x-circle me-1"></i>ПРОВАЛ
+                </span>
+                <span th:case="*" class="badge bg-secondary fs-6 px-3 py-2 rounded"
+                      th:text="${mission.outcome}"></span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+
+            <!-- Блок: Проклятие -->
+            <div class="section-card" th:if="${mission.curse != null}">
+                <div class="section-title">
+                    <i class="bi bi-radioactive"></i>Проклятый дух
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Название</span>
+                    <span class="data-value fw-bold" th:text="${mission.curse.name}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.curse.threatLevel != null}">
+                    <span class="data-label">Уровень угрозы</span>
+                    <span class="data-value">
+                <span th:switch="${mission.curse.threatLevel.name()}">
+                    <span th:case="'LOW'"    class="badge badge-threat-low px-2 py-1 rounded">LOW</span>
+                    <span th:case="'MEDIUM'" class="badge badge-threat-medium px-2 py-1 rounded">MEDIUM</span>
+                    <span th:case="'HIGH'"   class="badge badge-threat-high px-2 py-1 rounded">HIGH</span>
+                    <span th:case="*"        class="badge badge-threat-special px-2 py-1 rounded"
+                          th:text="${mission.curse.threatLevel.name()}">SPECIAL</span>
+                </span>
+            </span>
+                </div>
+            </div>
+
+            <!-- Блок: Заклинатели -->
+            <div class="section-card" th:if="${hasSorcerers}">
+                <div class="section-title">
+                    <i class="bi bi-people-fill"></i>Состав группы
+                </div>
+                <div th:each="s : ${mission.sorcerers}" class="item-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="item-name" th:text="${s.name}">—</div>
+                            <div class="item-sub" th:text="${s.rank}">—</div>
+                        </div>
+                        <span class="badge badge-rank px-2 py-1" th:text="${s.rank}">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок: Техники -->
+            <div class="section-card" th:if="${hasTechniques}">
+                <div class="section-title">
+                    <i class="bi bi-lightning-charge-fill"></i>Применённые техники
+                </div>
+                <div th:each="t : ${mission.techniques}" class="item-card">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="item-name" th:text="${t.name}">—</div>
+                            <div class="item-sub mt-1">
+                        <span th:if="${t.owner != null}"
+                              th:text="${t.owner}">—</span>
+                                <span th:if="${t.type != null}"
+                                      class="badge badge-technique ms-2"
+                                      th:text="${t.type}">—</span>
+                            </div>
+                        </div>
+                        <div class="text-end" th:if="${t.damage != null}">
+                            <div class="money-value"
+                                 th:text="${#numbers.formatDecimal(t.damage, 0, 'COMMA', 0, 'POINT')} + ' ¥'">—</div>
+                            <div class="item-sub">урон</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок: Хронология -->
+            <div class="section-card" th:if="${hasTimeline}">
+                <div class="section-title">
+                    <i class="bi bi-clock-history"></i>Хронология операции
+                </div>
+                <div class="timeline">
+                    <div th:each="event : ${mission.operationTimeline}" class="timeline-item">
+                        <div class="d-flex gap-3">
+                            <div>
+                                <div class="timeline-time"
+                                     th:text="${event.timestamp != null ?
+                                #temporals.format(event.timestamp, 'HH:mm:ss') : '—'}">—</div>
+                                <div class="timeline-type" th:text="${event.type}">—</div>
+                                <div class="timeline-desc" th:text="${event.description}">—</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок: Активность противника -->
+            <div class="section-card" th:if="${hasEnemyActivity}">
+                <div class="section-title">
+                    <i class="bi bi-exclamation-diamond-fill"></i>Активность противника
+                </div>
+                <div class="data-row" th:if="${mission.enemyActivity.behaviorType != null}">
+                    <span class="data-label">Тип поведения</span>
+                    <span class="data-value" th:text="${mission.enemyActivity.behaviorType}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.enemyActivity.mobility != null}">
+                    <span class="data-label">Мобильность</span>
+                    <span class="data-value" th:text="${mission.enemyActivity.mobility}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.enemyActivity.escalationRisk != null}">
+                    <span class="data-label">Риск эскалации</span>
+                    <span class="data-value">
+                <span th:text="${mission.enemyActivity.escalationRisk}">—</span>
+                <div th:switch="${mission.enemyActivity.escalationRisk.name()}" class="risk-bar">
+                    <div th:case="'LOW'"      class="risk-fill-low risk-bar"></div>
+                    <div th:case="'MEDIUM'"   class="risk-fill-medium risk-bar"></div>
+                    <div th:case="'HIGH'"     class="risk-fill-high risk-bar"></div>
+                    <div th:case="'CRITICAL'" class="risk-fill-critical risk-bar"></div>
+                </div>
+            </span>
+                </div>
+                <!-- Паттерны атак -->
+                <div th:if="${mission.enemyActivity.attackPatterns != null and
+                      !mission.enemyActivity.attackPatterns.isEmpty()}" class="mt-3">
+                    <div class="data-label mb-2">Паттерны атак</div>
+                    <div th:each="p : ${mission.enemyActivity.attackPatterns}" class="item-sub mb-1">
+                        <i class="bi bi-arrow-right-short text-danger"></i>
+                        <span th:text="${p}">—</span>
+                    </div>
+                </div>
+                <!-- Цели -->
+                <div th:if="${mission.enemyActivity.targetPriority != null and
+                      !mission.enemyActivity.targetPriority.isEmpty()}" class="mt-3">
+                    <div class="data-label mb-2">Приоритетные цели</div>
+                    <div th:each="t : ${mission.enemyActivity.targetPriority}">
+                        <span class="tag-badge" th:text="${t}">—</span>
+                    </div>
+                </div>
+                <!-- Контрмеры -->
+                <div th:if="${mission.enemyActivity.countermeasuresUsed != null and
+                      !mission.enemyActivity.countermeasuresUsed.isEmpty()}" class="mt-3">
+                    <div class="data-label mb-2">Контрмеры противника</div>
+                    <div th:each="c : ${mission.enemyActivity.countermeasuresUsed}" class="item-sub mb-1">
+                        <i class="bi bi-shield-fill text-warning me-1"></i>
+                        <span th:text="${c}">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок: Заметки -->
+            <div class="section-card" th:if="${mission.notes != null and !mission.notes.isEmpty()}">
+                <div class="section-title">
+                    <i class="bi bi-journal-text"></i>Примечания
+                </div>
+                <div class="notes-text" th:text="${mission.notes}">—</div>
+            </div>
+
+            <!-- Теги операции -->
+            <div class="section-card"
+                 th:if="${mission.operationTags != null and !mission.operationTags.isEmpty()}">
+                <div class="section-title">
+                    <i class="bi bi-tags-fill"></i>Теги операции
+                </div>
+                <div>
+            <span th:each="tag : ${mission.operationTags}"
+                  class="tag-badge" th:text="${tag}">—</span>
+                </div>
+            </div>
+
+        </div><!-- /col-lg-8 -->
+
+        <div class="col-lg-4">
+
+            <!-- Блок: Общая информация -->
+            <div class="section-card">
+                <div class="section-title">
+                    <i class="bi bi-info-circle-fill"></i>Общая информация
+                </div>
+                <div class="data-row">
+                    <span class="data-label">ID миссии</span>
+                    <span class="data-value" style="font-family:monospace;color:#a78bfa"
+                          th:text="${mission.missionId}">—</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Дата</span>
+                    <span class="data-value"
+                          th:text="${#temporals.format(mission.date, 'dd.MM.yyyy')}">—</span>
+                </div>
+                <div class="data-row">
+                    <span class="data-label">Локация</span>
+                    <span class="data-value" th:text="${mission.location}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.damageCost != null}">
+                    <span class="data-label">Общий ущерб</span>
+                    <span class="data-value money-value"
+                          th:text="${#numbers.formatDecimal(mission.damageCost, 0, 'COMMA', 0, 'POINT')} + ' ¥'">—</span>
+                </div>
+            </div>
+
+            <!-- Блок: Влияние на население -->
+            <div class="section-card" th:if="${hasCivilianImpact}">
+                <div class="section-title">
+                    <i class="bi bi-people-fill"></i>Мирное население
+                </div>
+                <div class="data-row" th:if="${mission.civilianImpact.evacuated != null}">
+                    <span class="data-label">Эвакуировано</span>
+                    <span class="data-value" th:text="${mission.civilianImpact.evacuated}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.civilianImpact.injured != null}">
+                    <span class="data-label">Пострадавших</span>
+                    <span class="data-value" style="color:#fca5a5"
+                          th:text="${mission.civilianImpact.injured}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.civilianImpact.missing != null}">
+                    <span class="data-label">Пропавших</span>
+                    <span class="data-value" style="color:#fcd34d"
+                          th:text="${mission.civilianImpact.missing}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.civilianImpact.publicExposureRisk != null}">
+                    <span class="data-label">Риск огласки</span>
+                    <span class="data-value"
+                          th:text="${mission.civilianImpact.publicExposureRisk}">—</span>
+                </div>
+            </div>
+
+            <!-- Блок: Экономическая оценка -->
+            <div class="section-card" th:if="${hasEconomicAssessment}">
+                <div class="section-title">
+                    <i class="bi bi-currency-yen"></i>Экономический ущерб
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.totalDamageCost != null}">
+                    <span class="data-label">Итого</span>
+                    <span class="data-value money-value"
+                          th:text="${#numbers.formatDecimal(mission.economicAssessment.totalDamageCost,0,'COMMA',0,'POINT')} + ' ¥'">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.infrastructureDamage != null}">
+                    <span class="data-label">Инфраструктура</span>
+                    <span class="data-value"
+                          th:text="${#numbers.formatDecimal(mission.economicAssessment.infrastructureDamage,0,'COMMA',0,'POINT')} + ' ¥'">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.commercialDamage != null}">
+                    <span class="data-label">Коммерческий</span>
+                    <span class="data-value"
+                          th:text="${#numbers.formatDecimal(mission.economicAssessment.commercialDamage,0,'COMMA',0,'POINT')} + ' ¥'">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.transportDamage != null}">
+                    <span class="data-label">Транспорт</span>
+                    <span class="data-value"
+                          th:text="${#numbers.formatDecimal(mission.economicAssessment.transportDamage,0,'COMMA',0,'POINT')} + ' ¥'">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.recoveryEstimateDays != null}">
+                    <span class="data-label">Восстановление</span>
+                    <span class="data-value"
+                          th:text="${mission.economicAssessment.recoveryEstimateDays} + ' дн.'">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.economicAssessment.insuranceCovered != null}">
+                    <span class="data-label">Страховка</span>
+                    <span class="data-value">
+                <span th:if="${mission.economicAssessment.insuranceCovered}"
+                      style="color:#86efac"><i class="bi bi-check-circle-fill"></i> Да</span>
+                <span th:if="${!mission.economicAssessment.insuranceCovered}"
+                      style="color:#fca5a5"><i class="bi bi-x-circle-fill"></i> Нет</span>
+            </span>
+                </div>
+            </div>
+
+            <!-- Блок: Условия среды -->
+            <div class="section-card" th:if="${hasEnvironment}">
+                <div class="section-title">
+                    <i class="bi bi-cloud-fog2-fill"></i>Условия среды
+                </div>
+                <div class="data-row" th:if="${mission.environmentConditions.weather != null}">
+                    <span class="data-label">Погода</span>
+                    <span class="data-value" th:text="${mission.environmentConditions.weather}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.environmentConditions.timeOfDay != null}">
+                    <span class="data-label">Время суток</span>
+                    <span class="data-value" th:text="${mission.environmentConditions.timeOfDay}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.environmentConditions.visibility != null}">
+                    <span class="data-label">Видимость</span>
+                    <span class="data-value" th:text="${mission.environmentConditions.visibility}">—</span>
+                </div>
+                <div class="data-row" th:if="${mission.environmentConditions.cursedEnergyDensity != null}">
+                    <span class="data-label">Пл. прокл. энергии</span>
+                    <span class="data-value" style="color:#c084fc"
+                          th:text="${mission.environmentConditions.cursedEnergyDensity} + ' %'">—</span>
+                </div>
+            </div>
+
+            <!-- Артефакты -->
+            <div class="section-card"
+                 th:if="${mission.artifactsRecovered != null and !mission.artifactsRecovered.isEmpty()}">
+                <div class="section-title">
+                    <i class="bi bi-gem"></i>Обнаруженные артефакты
+                </div>
+                <div th:each="a : ${mission.artifactsRecovered}" class="item-sub mb-1">
+                    <i class="bi bi-diamond-fill me-1" style="color:#c084fc"></i>
+                    <span th:text="${a}">—</span>
+                </div>
+            </div>
+
+            <!-- Рекомендации -->
+            <div class="section-card"
+                 th:if="${mission.recommendations != null and !mission.recommendations.isEmpty()}">
+                <div class="section-title">
+                    <i class="bi bi-clipboard2-check-fill"></i>Рекомендации
+                </div>
+                <div th:each="r : ${mission.recommendations}" class="item-sub mb-1">
+                    <i class="bi bi-arrow-right-short text-success"></i>
+                    <span th:text="${r}">—</span>
+                </div>
+            </div>
+
+        </div><!-- /col-lg-4 -->
+    </div><!-- /row -->
+</div><!-- /container -->
+
+<div class="container mb-5">
+    <a href="/" class="btn-back">
+        <i class="bi bi-arrow-left me-1"></i>Вернуться к архиву
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

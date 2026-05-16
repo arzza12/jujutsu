@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архив миссий — Токийский магический колледж</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0d0d0d;
+            color: #e0e0e0;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .navbar-custom {
+            background-color: #1a1a2e;
+            border-bottom: 2px solid #7b2fff;
+        }
+        .navbar-brand {
+            color: #c084fc !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+            letter-spacing: 1px;
+        }
+        .page-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 1px solid #7b2fff33;
+            padding: 2rem 0;
+        }
+        .page-title {
+            color: #c084fc;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .stat-card {
+            background: #1a1a2e;
+            border: 1px solid #7b2fff44;
+            border-radius: 12px;
+            padding: 1.2rem 1.5rem;
+            text-align: center;
+        }
+        .stat-card .stat-number {
+            font-size: 2.2rem;
+            font-weight: 700;
+        }
+        .stat-card .stat-label {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .mission-table {
+            background: #111122;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #7b2fff33;
+        }
+        .mission-table thead {
+            background: #1a1a2e;
+            color: #c084fc;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .mission-table tbody tr {
+            border-bottom: 1px solid #ffffff0d;
+            transition: background 0.2s;
+        }
+        .mission-table tbody tr:hover {
+            background: #1a1a2e;
+        }
+        .mission-table td {
+            vertical-align: middle;
+            padding: 0.9rem 1rem;
+        }
+        .badge-success  { background-color: #166534; color: #86efac; }
+        .badge-failure  { background-color: #7f1d1d; color: #fca5a5; }
+        .badge-partial  { background-color: #713f12; color: #fcd34d; }
+        .badge-threat-low     { background-color: #14532d; color: #86efac; }
+        .badge-threat-medium  { background-color: #713f12; color: #fcd34d; }
+        .badge-threat-high    { background-color: #7f1d1d; color: #fca5a5; }
+        .badge-threat-special { background-color: #4c1d95; color: #c4b5fd; }
+        .btn-report {
+            background: #7b2fff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.3rem 0.9rem;
+            font-size: 0.85rem;
+            transition: background 0.2s;
+        }
+        .btn-report:hover { background: #9333ea; color: white; }
+        .btn-upload {
+            background: linear-gradient(135deg, #7b2fff, #9333ea);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+        }
+        .btn-upload:hover { background: linear-gradient(135deg, #9333ea, #a855f7); color: white; }
+        .alert-flash {
+            border-radius: 10px;
+            border: none;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #555;
+        }
+        .empty-state i { font-size: 4rem; color: #7b2fff44; }
+        .mission-id { font-family: monospace; color: #a78bfa; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<!-- Навигация -->
+<nav class="navbar navbar-custom">
+    <div class="container">
+        <span class="navbar-brand">
+            <i class="bi bi-archive-fill me-2"></i>АРХИВ МИССИЙ — ТМК
+        </span>
+        <a href="/upload" class="btn btn-upload">
+            <i class="bi bi-upload me-1"></i>Загрузить миссию
+        </a>
+    </div>
+</nav>
+
+<!-- Заголовок страницы -->
+<div class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <i class="bi bi-folder2-open me-2"></i>Оперативный архив
+        </div>
+        <div class="text-secondary mt-1">Токийский магический колледж — секретная документация</div>
+
+        <!-- Статистика -->
+        <div class="row g-3 mt-3">
+            <div class="col-auto">
+                <div class="stat-card">
+                    <div class="stat-number text-purple" style="color:#c084fc"
+                         th:text="${totalCount}">0</div>
+                    <div class="stat-label">Всего миссий</div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="stat-card">
+                    <div class="stat-number" style="color:#86efac"
+                         th:text="${successCount}">0</div>
+                    <div class="stat-label">Успешных</div>
+                </div>
+            </div>
+            <div class="col-auto">
+                <div class="stat-card">
+                    <div class="stat-number" style="color:#fca5a5"
+                         th:text="${failureCount}">0</div>
+                    <div class="stat-label">Провалов</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Основной контент -->
+<div class="container mt-4">
+
+    <!-- Flash-сообщения -->
+    <div th:if="${successMessage}" class="alert alert-success alert-flash alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span th:text="${successMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${errorMessage}" class="alert alert-danger alert-flash alert-dismissible fade show mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <span th:text="${errorMessage}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Таблица миссий -->
+    <div th:if="${missions != null and !missions.isEmpty()}">
+        <div class="mission-table">
+            <table class="table table-dark table-borderless mb-0">
+                <thead>
+                <tr>
+                    <th>ID миссии</th>
+                    <th>Дата</th>
+                    <th>Локация</th>
+                    <th>Проклятие</th>
+                    <th>Угроза</th>
+                    <th>Исход</th>
+                    <th>Ущерб (¥)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="mission : ${missions}">
+
+                    <!-- ID миссии -->
+                    <td>
+                        <span class="mission-id" th:text="${mission.missionId}">—</span>
+                    </td>
+
+                    <!-- Дата -->
+                    <td th:text="${#temporals.format(mission.date, 'dd.MM.yyyy')}">—</td>
+
+                    <!-- Локация -->
+                    <td th:text="${mission.location}">—</td>
+
+                    <!-- Проклятие -->
+                    <td th:text="${mission.curse != null ? mission.curse.name : '—'}">—</td>
+
+                    <!-- Уровень угрозы -->
+                    <td>
+                            <span th:if="${mission.curse != null and mission.curse.threatLevel != null}">
+                                <span th:switch="${mission.curse.threatLevel.name()}">
+                                    <span th:case="'LOW'"
+                                          class="badge badge-threat-low px-2 py-1 rounded">LOW</span>
+                                    <span th:case="'MEDIUM'"
+                                          class="badge badge-threat-medium px-2 py-1 rounded">MEDIUM</span>
+                                    <span th:case="'HIGH'"
+                                          class="badge badge-threat-high px-2 py-1 rounded">HIGH</span>
+                                    <span th:case="*"
+                                          class="badge badge-threat-special px-2 py-1 rounded"
+                                          th:text="${mission.curse.threatLevel.name()}">SPECIAL</span>
+                                </span>
+                            </span>
+                        <span th:if="${mission.curse == null or mission.curse.threatLevel == null}">—</span>
+                    </td>
+
+                    <!-- Исход -->
+                    <td>
+                            <span th:switch="${mission.outcome != null ? mission.outcome.name() : 'UNKNOWN'}">
+                                <span th:case="'SUCCESS'"
+                                      class="badge badge-success px-2 py-1 rounded">
+                                    <i class="bi bi-check-lg me-1"></i>Успех
+                                </span>
+                                <span th:case="'PARTIAL_SUCCESS'"
+                                      class="badge badge-partial px-2 py-1 rounded">
+                                    <i class="bi bi-dash-lg me-1"></i>Частичный
+                                </span>
+                                <span th:case="'PARTIAL'"
+                                      class="badge badge-partial px-2 py-1 rounded">
+                                    <i class="bi bi-dash-lg me-1"></i>Частичный
+                                </span>
+                                <span th:case="'FAILURE'"
+                                      class="badge badge-failure px-2 py-1 rounded">
+                                    <i class="bi bi-x-lg me-1"></i>Провал
+                                </span>
+                                <span th:case="*"
+                                      class="badge bg-secondary px-2 py-1 rounded"
+                                      th:text="${mission.outcome}">—</span>
+                            </span>
+                    </td>
+
+                    <!-- Ущерб -->
+                    <td>
+                            <span th:if="${mission.damageCost != null}"
+                                  th:text="${#numbers.formatDecimal(mission.damageCost, 0, 'COMMA', 0, 'POINT')}">—</span>
+                        <span th:if="${mission.damageCost == null}" class="text-secondary">—</span>
+                    </td>
+
+                    <!-- Кнопка отчёта -->
+                    <td>
+                        <a th:href="@{/report/{id}(id=${mission.missionId})}"
+                           class="btn btn-report">
+                            <i class="bi bi-file-earmark-text me-1"></i>Отчёт
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Пустое состояние -->
+    <div th:if="${missions == null or missions.isEmpty()}" class="empty-state">
+        <i class="bi bi-inbox mb-3 d-block"></i>
+        <h4 class="text-secondary">Архив пуст</h4>
+        <p class="text-secondary">Загрузите первый файл миссии чтобы начать</p>
+        <a href="/upload" class="btn btn-upload mt-2">
+            <i class="bi bi-upload me-1"></i>Загрузить миссию
+        </a>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
